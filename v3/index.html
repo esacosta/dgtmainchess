@@ -17,6 +17,8 @@
         --accent: #4da3ff;
         --text: #e8eefc;
         --muted: #9db0d6;
+        --board-max-size: 640px;
+        --vertical-safe-space: 260px;
       }
 
       * {
@@ -114,9 +116,11 @@
       }
 
       #chessground {
-        width: 100%;
-        max-width: 640px;
-        height: 640px;
+        width: min(100%, var(--board-max-size));
+        max-width: min(var(--board-max-size), max(0px, calc(100vh - var(--vertical-safe-space))));
+        max-height: max(0px, calc(100vh - var(--vertical-safe-space)));
+        aspect-ratio: 1 / 1;
+        height: auto;
         margin: 0 auto;
       }
 
@@ -516,7 +520,7 @@
       <div class="header">
         <div class="title-block">
           <h1>Mainchess DGT via WebUSB</h1>
-          <p>Visualización del tablero DGT con la funcionalidad estable de la versión 2.</p>
+          <p>Visualización del tablero DGT sin necesidad de software de DGT, a través de WebUSB (por esacosta).</p>
         </div>
         <button class="primary-btn" onclick="loadBoard()">Cargar posición del tablero DGT</button>
       </div>
