@@ -1,0 +1,88 @@
+/** Colored board squares as an embedded SVG */
+cg-board {
+  background-image: url('https://play.mainchess.com/static/img/maple.d620f00.png');
+}
+
+/** Interactive board square colors */
+cg-board square.move-dest {
+  background: radial-gradient(rgba(20, 85, 30, 0.5) 22%, #208530 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+}
+cg-board square.premove-dest {
+  background: radial-gradient(rgba(20, 30, 85, 0.5) 22%, #203085 0, rgba(0, 0, 0, 0.3) 0, rgba(0, 0, 0, 0) 0);
+}
+cg-board square.oc.move-dest {
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 85, 0, 0.3) 80%);
+}
+cg-board square.oc.premove-dest {
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 30, 85, 0.2) 80%);
+}
+cg-board square.move-dest:hover {
+  background: rgba(20, 85, 30, 0.3);
+}
+cg-board square.premove-dest:hover {
+  background: rgba(20, 30, 85, 0.2);
+}
+cg-board square.last-move {
+  background-color: rgba(155, 199, 0, 0.41);
+}
+cg-board square.selected {
+  background-color: rgba(20, 85, 30, 0.5);
+}
+cg-board square.check {
+  background: radial-gradient(ellipse at center, rgba(255, 0, 0, 1) 0%, rgba(231, 0, 0, 1) 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);
+}
+cg-board square.current-premove {
+  background-color: rgba(20, 30, 85, 0.5);
+}
+
+/** Alternating colors in rank/file labels */
+.cg-wrap.orientation-white coords.ranks coord:nth-child(2n) {
+  color: #b58863;
+}
+.cg-wrap.orientation-white coords.ranks coord:nth-child(2n + 1) {
+  color: #f0d9b5;
+}
+.cg-wrap.orientation-white coords.files coord:nth-child(2n) {
+  color: #b58863;
+}
+.cg-wrap.orientation-white coords.files coord:nth-child(2n + 1) {
+  color: #f0d9b5;
+}
+
+.cg-wrap.orientation-black coords.ranks coord:nth-child(2n) {
+  color: #f0d9b5;
+}
+.cg-wrap.orientation-black coords.ranks coord:nth-child(2n + 1) {
+  color: #b58863;
+}
+.cg-wrap.orientation-black coords.files coord:nth-child(2n) {
+  color: #f0d9b5;
+}
+.cg-wrap.orientation-black coords.files coord:nth-child(2n + 1) {
+  color: #b58863;
+}
+
+
+.cg-wrap:before {
+  content: "";
+border: 10px solid transparent;
+margin-left: -6px;
+margin-top: -6px;
+padding: 0;
+width: calc(100% - 8px);
+height: calc(100% - 8px);
+border-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAlCAMAAADyQNAxAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABCUExURUdwTEk2HKxoQ7eZbloxF1oxF3dDEFoxF1gwFVQrEv/0xGE+GI9VKnM/C4ROLFY8Iq+GXpVjO+XSp2lUNMWsgfjmtxZaP5cAAAAKdFJOUwD///8aNP8c8PAaRigKAAAA10lEQVQ4y82U6w6DIAxGcSCC3Fl4/1ddCzrcJmQkS+b5x5cTEWhLgsnwAx9JIDxQwKuMRnJwTCwnhq5AnBB3Q/yaE/dM9IgVqS+ZRbYdt6RadJKiIgtl4XSxfIxezmw5g83ChgB/z0G2gpFzmIBt1W4tDWv5n4WH6Fh3ACwFdtuSeJ1mwHI//NYXFpxBdSx8ZlNqQrZvwtbKuaLlU/JdK+gLV+FAD7X70cEzl1p16qWtj30+0ZT2ynHvE8JtM0PTWOurNW1uPq0jlulMQa0xCJzY7kTlZf0AwTYZ05dlaCEAAAAASUVORK5CYII=) 10 round;
+background-repeat: no-repeat;
+position: absolute;
+}
+
+cg-board square.last-move {
+  will-change: transform;
+  background-color: rgba(161, 21, 255, 0.41);
+}
+cg-board square.selected {
+  background-color: rgba(85, 20, 65, 0.5);
+}
+cg-board square.check {
+  background: rgba(255, 0, 0, 1) /* radial-gradient(ellipse at center, rgba(255, 0, 0, 1) 0%, rgba(231, 0, 0, 1) 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);*/
+}

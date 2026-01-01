@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Mainchess DGT a través de WebUSB</title>
+
+    <script src="plugins/chessground/chessground.min.js"></script>
+    <link rel="stylesheet" href="plugins/chessground/base.css">
+    <link rel="stylesheet" href="plugins/chessground/colors.css">
+    <link rel="stylesheet" href="plugins/chessground/pieces.css">
+
+    <style>
+      cg-board square.last-move {
+        will-change: transform;
+        background-color: rgba(119, 0, 199, 0.41);
+      }
+    cg-board square.selected {
+        background-color: rgba(85, 20, 65, 0.5);
+    }
+    cg-board square.check {
+        background: rgba(255, 0, 0, 1) /* radial-gradient(ellipse at center, rgba(255, 0, 0, 1) 0%, rgba(231, 0, 0, 1) 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);*/
+    }
+    </style>
+    <script type="module">
+      import Board from '../lib/Board.js'
+      // Función para mostrar el objeto en un cuadro de forma genérica
+  function mostrarObjetoEnCuadro(objeto) {
+    // Obtener el elemento cuadro por su ID
+    var cuadro = document.getElementById('cuadro');
+    console.log('mostrarObjetoEnCuadro')
+    // Crear un elemento de lista no ordenada (ul)
+    var lista = document.createElement('ul');
+
+    // Iterar sobre las propiedades del objeto
+    for (var propiedad in objeto) {
+      console.log(propiedad)
+      if (objeto.hasOwnProperty(propiedad)) {
+        // Crear un elemento de lista (li) para cada propiedad
+        var elementoLista = document.createElement('li');
+
+        // Crear un texto con el nombre de la propiedad y su valor
+        var texto = document.createTextNode(propiedad + ': ' + objeto[propiedad]);
+
+        // Agregar el texto al elemento de lista
+        elementoLista.appendChild(texto);
+
+        // Agregar el elemento de lista a la lista
+        lista.appendChild(elementoLista);
+      }
+    }
+
+    // Agregar la lista al cuadro
+    cuadro.appendChild(lista);
+  }
+      (function () {
+        window.loadBoard = loadBoard
+
+        let board
+        let chessground
+
+        async function loadBoard () {
+          const port = await getPort()
+          if (!port) {
+            throw new Error('No port available.')
+          }
+          await port.open({ baudRate: 9600 })
+
+          board = new Board(port)
+          const { serialNr, version, position } = await board.reset()
+          document.getElementById('serialnr').innerHTML = serialNr
+          document.getElementById('version').innerHTML = version
+          
+
+          chessground = Chessground(document.getElementById('chessground'), {
+            fen: '8/8/8/8/8/8/8/8/8',
+            orientation: 'black',
+            disableContextMenu: true,
+            trustAllEvents: true,
+            highlight: {
+              lastMove: true, // add last-move class to squares
+              check: true, // add check class to squares
+            },
+            animation: {
+              enabled: true,
+              duration: 1000,
+            },
+            drawable: {
+              enabled: true, // can draw
+              visible: true, // can view
+              defaultSnapToValidMove: true,
+              eraseOnClick: true,
+            },
+            selectable: {
+              enabled: true,
+            },
+            movable: {
+              free: true, // all moves are valid - board editor
+              color: 'both', // color that can move. white | black | both | undefined
+              showDests: true, // whether to add the move-dest class on squares
+            }
+          })
+          chessground.setPieces(position)
+          document.getElementById('fen').innerHTML = chessground.getFen()
+          mostrarObjetoEnCuadro(position)
+          document.getElementById('info').innerHTML = JSON.stringify(Array.from(position), null, 2)
+          console.log(position)
+          const reader = board.getReader()
+          var from = ""
+          var to = ""
+          while (true) {
+            const { value } = await reader.read()
+            chessground.setPieces(value)
+            console.log(value)
+            if (from.length > 0 && to.length <= 0)
+              to = Array.from(value)[0][0]
+            if (from.length <= 0)
+              from = Array.from(value)[0][0]
+            document.getElementById('info').innerHTML = from + to
+            // document.getElementById('info').innerHTML = JSON.stringify(Array.from(value), null, 2)
+            document.getElementById('fen').innerHTML = chessground.getFen()
+            if (from.length > 0 && to.length > 0)
+            {
+              //-- Last move
+              chessground.set({
+                lastMove:  [from, to]
+              })
+              from = ""
+              to = ""
+            }
+          }
+        }
+        
+        async function getPort () {
+          const ports = await navigator.serial.getPorts()
+          for (const port of ports) {
+            for (const filter of Board.FILTERS) {
+              if (port.productId === filter.productId && port.vendorId === filter.vendorId) {
+                return port
+              }
+            }
+          }
+
+          // do not use `Board.FILTERS` as of now since we do not
+          //   know all valid identifiers, also when using a VM etc.
+          const filters = []
+          return await navigator.serial.requestPort({
+            filters: filters
+          })
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <button onclick="loadBoard()">Cargar posición del tablero DGT</button>
+
+    <p><strong>Puerto serie Nr:</strong> <span id="serialnr">n/a</span></p>
+    <p><strong>Versión:</strong> <span id="version">n/a</span></p>
+    <p><strong>FEN:</strong> <span id="fen"></span></p>
+    <div id="chessground" style="width: 600px; height: 600px; margin-top: 30px;"></div>
+    <p><strong>INFO DRIVER:</strong> <span id="info"></span></p>
+    <div id="cuadro"></div>
+  </body>
+</html>

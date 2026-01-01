@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Mainchess DGT a través de WebUSB</title>
+    <!-- <script src="plugins/chessground/chessground.min.js"></script>-->
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.0.4/assets/chessground.base.css">
+    <link rel="stylesheet" href="plugins/chessground/colors.css">
+    <link rel="stylesheet" href="plugins/chessground/pieces.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
+    <style>
+      /* Estilo para la ventana modal */
+    #myModal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+    
+    /* Contenido de la ventana modal */
+    #myModal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+
+    /* Título de la ventana modal */
+    #modal-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .cg-wrap:before {
+      content: "";
+    border: 10px solid transparent;
+    margin-left: -6px;
+    margin-top: -6px;
+    padding: 0;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    border-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAlCAMAAADyQNAxAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABCUExURUdwTEk2HKxoQ7eZbloxF1oxF3dDEFoxF1gwFVQrEv/0xGE+GI9VKnM/C4ROLFY8Iq+GXpVjO+XSp2lUNMWsgfjmtxZaP5cAAAAKdFJOUwD///8aNP8c8PAaRigKAAAA10lEQVQ4y82U6w6DIAxGcSCC3Fl4/1ddCzrcJmQkS+b5x5cTEWhLgsnwAx9JIDxQwKuMRnJwTCwnhq5AnBB3Q/yaE/dM9IgVqS+ZRbYdt6RadJKiIgtl4XSxfIxezmw5g83ChgB/z0G2gpFzmIBt1W4tDWv5n4WH6Fh3ACwFdtuSeJ1mwHI//NYXFpxBdSx8ZlNqQrZvwtbKuaLlU/JdK+gLV+FAD7X70cEzl1p16qWtj30+0ZT2ynHvE8JtM0PTWOurNW1uPq0jlulMQa0xCJzY7kTlZf0AwTYZ05dlaCEAAAAASUVORK5CYII=) 10 round;
+    background-repeat: no-repeat;
+    position: absolute;
+  }
+    </style>
+    <style>
+      cg-board square.last-move {
+        will-change: transform;
+        background-color: rgba(119, 0, 199, 0.41);
+      }
+    cg-board square.selected {
+        background-color: rgba(85, 20, 65, 0.5);
+    }
+    cg-board square.check {
+        background: rgba(255, 0, 0, 1) /* radial-gradient(ellipse at center, rgba(255, 0, 0, 1) 0%, rgba(231, 0, 0, 1) 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);*/
+    }
+    </style>
+    
+    <script type="module">
+      import { Chessground } from 'https://cdn.jsdelivr.net/npm/chessground@9.0.4/dist/chessground.js';
+      import Board from './lib/Board.js'
+      var showArrows = false;
+      var turnLetter = 'w';
+      const toDests = (chess) => {
+        const dests = {};
+        chess.SQUARES.forEach((s) => {
+          const ms = chess.moves({ square: s, verbose: true });
+          if (ms.length) dests[s] = ms.map((m) => m.to);
+        });
+        const color = chess.turn() === "w" ? "white" : "black";
+
+        return {
+          color, // who's turn is it
+          dests, // what to move
+          free: false
+        };
+      };
+      
+
+      // Función para mostrar el objeto en un cuadro de forma genérica
+  function mostrarObjetoEnCuadro(objeto) {
+    // Obtener el elemento cuadro por su ID
+    var cuadro = document.getElementById('cuadro');
+    console.log('mostrarObjetoEnCuadro')
+    // Crear un elemento de lista no ordenada (ul)
+    var lista = document.createElement('ul');
+
+    // Iterar sobre las propiedades del objeto
+    for (var propiedad in objeto) {
+      console.log(propiedad)
+      if (objeto.hasOwnProperty(propiedad)) {
+        // Crear un elemento de lista (li) para cada propiedad
+        var elementoLista = document.createElement('li');
+
+        // Crear un texto con el nombre de la propiedad y su valor
+        var texto = document.createTextNode(propiedad + ': ' + objeto[propiedad]);
+
+        // Agregar el texto al elemento de lista
+        elementoLista.appendChild(texto);
+
+        // Agregar el elemento de lista a la lista
+        lista.appendChild(elementoLista);
+      }
+    }
+
+    // Agregar la lista al cuadro
+    cuadro.appendChild(lista);
+  }
+      (function () {
+        window.loadBoard = loadBoard
+        
+        let board
+        let chessground
+        let chessgroundAux
+        let game
+        let turnColor
+        function setChessGround() {
+          chessground.set({
+              fen: chessgroundAux.getFen(),
+              orientation: 'white',
+              disableContextMenu: true,
+              turnColor: turnColor,
+              check: game.in_check(),
+              highlight: {
+                lastMove: true, // add last-move class to squares
+                check: true, // add check class to squares
+              },
+              animation: {
+                enabled: true,
+                duration: 1000,
+              },
+              movable: {
+                free: false
+              }
+            })
+        }
+        async function loadBoard () {
+          const port = await getPort()
+          if (!port) {
+            throw new Error('Ningún puerto disponible.')
+          }
+          await port.open({ baudRate: 9600 })
+
+          board = new Board(port)
+          const { serialNr, version, position } = await board.reset()
+          document.getElementById('serialnr').innerHTML = serialNr
+          document.getElementById('version').innerHTML = version
+          game = new Chess()
+          
+          chessgroundAux = Chessground(document.getElementById('chessgroundAux'), {
+            fen: '8/8/8/8/8/8/8/8/8',
+            orientation: 'white',
+            disableContextMenu: true,
+            trustAllEvents: true,
+            movable: {
+              free: false
+            }
+          });
+          
+          chessgroundAux.setPieces(position)
+          var blancasRadio = document.getElementById("blancasRadio");
+          turnLetter = blancasRadio.checked ? 'w' : 'b';
+          var FEN = chessgroundAux.getFen() +  " " + turnLetter + " - - 0 1";
+
+
+          game.load(FEN)
+          console.log('Color: ' + game.turn())
+          
+          console.log('FEN: ' + game.fen())
+          console.log('INCHECK ' + game.in_check());
+          document.getElementById('fen').innerHTML = FEN
+          mostrarObjetoEnCuadro(position)
+          document.getElementById('info').innerHTML = JSON.stringify(Array.from(position), null, 2)
+          console.log(position)
+          
+          var from = ""
+          var to = ""
+          var from2 = ""
+          var to2 = ""
+          turnColor = game.turn() === "w" ? "white" : "black";
+          document.getElementById('turno').innerHTML = turnColor
+          console.log(position.ascii)
+          chessground = Chessground(document.getElementById('chessground'), {
+            fen: FEN,
+            orientation: 'white',
+            disableContextMenu: true,
+            turnColor: turnColor,
+            check: game.in_check(),
+            highlight: {
+              lastMove: true, // add last-move class to squares
+              check: true, // add check class to squares
+            },
+            animation: {
+              enabled: true,
+              duration: 1000,
+            },
+            movable: {
+              free: false
+            }
+          })
+          const reader = board.getReader()
+          while (true) {
+            const { value } = await reader.read()
+            chessgroundAux.setPieces(value)
+            // game.load(chessgroundAux.getFen())
+//             turnColor = game.turn() === "w" ? "white" : "black";
+
+   //          console.log('Color: ' + turnColor)
+      //       console.log('FEN: ' + game.fen())
+            
+            //document.getElementById('turno').innerHTML = turnColor
+
+            var role = "";
+            if (from.length <= 0)
+            {
+              from = Array.from(value)[0][0]
+              role = Array.from(value)[0][1];
+              console.log('FROM ' + from)
+              if (role)
+              {
+                console.log('ROLE FROM' + JSON.stringify(role.role))
+              }
+              
+              document.getElementById('desde').innerHTML = from;
+              setTimeout(() => {
+                if (to == '')
+                {
+                  from = ''
+                  setChessGround();
+                }
+              }, "1000");
+            }
+            else
+            {
+              to = Array.from(value)[0][0]
+              role = Array.from(value)[0][1];
+              console.log('TO ' + to)
+              document.getElementById('hasta').innerHTML = to;
+              if (role)
+              {
+                console.log('ROLE TO' + JSON.stringify(role.role))
+                document.getElementById('hasta').innerHTML += " " + role.role + " " + role.color;
+                // window.alert('Coronación');
+                // chessground.setPieces(value);
+              }
+              else
+                from = ''
+            }
+            // document.getElementById('info').innerHTML = from + to
+            // document.getElementById('info').innerHTML = JSON.stringify(Array.from(value), null, 2)
+            // document.getElementById('fen').innerHTML = game.fen()
+            
+
+            if (from != null && to != null && from.length > 0 && to.length > 0)
+            {
+              turnColor = role.color === "black" ? "white" : "black";
+              turnLetter = role.color === "black" ? "b" : "w";
+              
+              FEN = chessground.getFen() +  " " + turnLetter + " - - 0 1";
+              game.load(FEN)
+              console.log('FEN: ' + game.fen())
+
+              // Verificar si el movimiento 'e2e4' es legal
+              var movimientoLegal = game.move({ from: from, to: to });
+              chessground.move(from, to);
+
+              // Imprimir el resultado en la consola
+              if (movimientoLegal !== null) {
+                console.log('El movimiento es legal.');
+                document.getElementById('juego').innerHTML = from + to + " Movimiento legal";
+              } else {
+                console.log('El movimiento no es legal.');
+                document.getElementById('juego').innerHTML = from + to + " Movimiento ilegal";
+              }
+
+              document.getElementById('turno').innerHTML = turnColor
+              document.getElementById('info').innerHTML = JSON.stringify(Array.from(value), null, 2)
+              console.log('Color: ' + game.turn())
+              
+              console.log('INCHECK ' + game.in_check());
+
+              if (chessgroundAux.getFen() != chessground.getFen())
+              {
+                setChessGround();
+              }
+              
+              from = '';
+              to = '';
+            }
+          }
+        }
+        
+        async function getPort () {
+          const ports = await navigator.serial.getPorts()
+          for (const port of ports) {
+            for (const filter of Board.FILTERS) {
+              if (port.productId === filter.productId && port.vendorId === filter.vendorId) {
+                return port
+              }
+            }
+          }
+
+          // do not use `Board.FILTERS` as of now since we do not
+          //   know all valid identifiers, also when using a VM etc.
+          const filters = []
+          return await navigator.serial.requestPort({
+            filters: filters
+          })
+        }
+      })()
+    </script>
+  </head>
+  <body onload="">
+    
+    <button onclick="loadBoard()">Cargar posición del tablero DGT</button>
+    <p><strong>Puerto serie Nr:</strong> <span id="serialnr">n/a</span> | <strong>Versión:</strong> <span id="version">n/a</span></p>
+    <div id="chessground" style="width: 600px; height: 600px; margin-top: 30px;"></div>
+    <p><strong>Turno:</strong> <span id="turno"></span> | <strong>Movimiento:</strong> <span id="juego"></span></p>
+    <p><strong>FEN:</strong> <span id="fen"></span></p>
+    <p><strong>DESDE:</strong> <span id="desde"></span> | <p><strong>HASTA:</strong><span id="hasta"></span></p>
+    <p><strong>INFO DRIVER:</strong> <span id="info"></span></p>
+    <div id="chessgroundAux" style="width: 600px; display: none; height: 600px; margin-top: 30px;"></div>
+    <div id="cuadro"></div>
+    
+<!-- Botón para abrir la ventana modal -->
+<!--<button onclick="abrirModal()">Iniciar Juego</button>-->
+<!-- Ventana modal -->
+<div id="myModal">
+  <div id="myModal-content">
+    <div id="modal-title">Selecciona el color para empezar</div>
+    <form id="inicioJuegoForm">
+      <label>
+        <input type="radio" name="color" id="blancasRadio"> Blancas
+      </label>
+      <label>
+        <input type="radio" name="color" id="negrasRadio"> Negras
+      </label>
+      <button type="button" onclick="verificarInicioJuego()">Confirmar</button>
+    </form>
+  </div>
+</div>
+
+<script >
+  // Función para abrir la ventana modal
+  function abrirModal() {
+    var modal = document.getElementById("myModal");
+    modal.style.display = "block";
+  }
+
+  // Función para verificar quién empieza jugando
+  function verificarInicioJuego() {
+    
+    var blancasRadio = document.getElementById("blancasRadio");
+    var negrasRadio = document.getElementById("negrasRadio");
+    
+    if (blancasRadio.checked || negrasRadio.checked) {
+      var modal = document.getElementById("myModal");
+      modal.style.display = "none";
+
+      if (blancasRadio.checked) {
+        // alert("¡Comienzan las blancas!");
+        turnLetter  = 'w';
+        loadBoard();
+      } else {
+        // alert("¡Comienzan las negras!");
+        turnLetter = 'b';
+        loadBoard();
+      }
+    } else {
+      alert("Por favor, elija un color para comenzar.");
+    }
+  }
+</script>
+
+   
+  </body>
+</html>
