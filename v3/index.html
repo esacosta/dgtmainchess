@@ -1,217 +1,626 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8">
     <title>Mainchess DGT a través de WebUSB</title>
+    <!-- <script src="plugins/chessground/chessground.min.js"></script>-->
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.0.4/assets/chessground.base.css">
     <link rel="stylesheet" href="plugins/chessground/colors.css">
     <link rel="stylesheet" href="plugins/chessground/pieces.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
-    
     <style>
-        body {
-            display: flex;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
+      :root {
+        --bg: #0b1221;
+        --panel: #11182b;
+        --border: #1f2c45;
+        --accent: #4da3ff;
+        --text: #e8eefc;
+        --muted: #9db0d6;
+      }
 
-        .left-section, .right-section {
-            flex: 1;
-            padding: 20px;
-            box-sizing: border-box;
-        }
+      * {
+        box-sizing: border-box;
+      }
 
-        .left-section {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f0f0f0;
-        }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at 10% 20%, rgba(77, 163, 255, 0.15), transparent 25%),
+                    radial-gradient(circle at 90% 10%, rgba(146, 111, 255, 0.2), transparent 20%),
+                    radial-gradient(circle at 80% 90%, rgba(77, 163, 255, 0.12), transparent 25%),
+                    var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
 
-        .right-section {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            background-color: #ffffff;
-        }
+      .app {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 32px 24px 48px;
+      }
 
-        .right-section p, .right-section button {
-            margin-bottom: 10px;
-        }
+      .header {
+        background: rgba(17, 24, 43, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px 24px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(8px);
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
 
+      .title-block h1 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 0.2px;
+      }
+
+      .title-block p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, #4da3ff, #6b7bff);
+        color: white;
+        padding: 12px 18px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(77, 163, 255, 0.35);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .primary-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 26px rgba(77, 163, 255, 0.4);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+      }
+
+      .card {
+        background: rgba(17, 24, 43, 0.85);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+      }
+
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        letter-spacing: 0.2px;
+        color: var(--muted);
+      }
+
+      .board-shell {
+        background: #0c1426;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 12px;
+      }
+
+      #chessground {
+        width: 100%;
+        max-width: 640px;
+        height: 640px;
+        margin: 0 auto;
+      }
+
+      #chessgroundAux {
+        display: none;
+        width: 100%;
+        height: 600px;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+
+      .info-item {
+        background: #0f192c;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+
+      .info-item strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .info-item span {
+        font-size: 15px;
+        word-break: break-word;
+      }
+
+      #cuadro {
+        margin-top: 14px;
+        padding: 12px 14px;
+        background: #0f192c;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        max-height: 180px;
+        overflow: auto;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 16px;
+      }
+
+      .status-line {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(77, 163, 255, 0.12);
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(77, 163, 255, 0.35);
+        font-size: 13px;
+      }
+      /* Estilo para la ventana modal */
+    #myModal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.55);
+      }
+      
+      /* Contenido de la ventana modal */
+      #myModal-content {
+        background-color: #0f192c;
+        margin: 12% auto;
+        padding: 24px;
+        border: 1px solid var(--border);
+        width: 420px;
+        max-width: 90%;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+        border-radius: 12px;
+        color: var(--text);
+      }
+
+      /* Título de la ventana modal */
+      #modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        letter-spacing: 0.3px;
+      }
+
+      #inicioJuegoForm label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      #inicioJuegoForm button {
+        margin-top: 6px;
+      }
+
+      .cg-wrap:before {
+        content: "";
+        border: 10px solid transparent;
+        margin-left: -6px;
+        margin-top: -6px;
+        padding: 0;
+        width: calc(100% - 8px);
+        height: calc(100% - 8px);
+        border-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAlCAMAAADyQNAxAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAABCUExURUdwTEk2HKxoQ7eZbloxF1oxF3dDEFoxF1gwFVQrEv/0xGE+GI9VKnM/C4ROLFY8Iq+GXpVjO+XSp2lUNMWsgfjmtxZaP5cAAAAKdFJOUwD///8aNP8c8PAaRigKAAAA10lEQVQ4y82U6w6DIAxGcSCC3Fl4/1ddCzrcJmQkS+b5x5cTEWhLgsnwAx9JIDxQwKuMRnJwTCwnhq5AnBB3Q/yaE/dM9IgVqS+ZRbYdt6RadJKiIgtl4XSxfIxezmw5g83ChgB/z0G2gpFzmIBt1W4tDWv5n4WH6Fh3ACwFdtuSeJ1mwHI//NYXFpxBdSx8ZlNqQrZvwtbKuaLlU/JdK+gLV+FAD7X70cEzl1p16qWtj30+0ZT2ynHvE8JtM0PTWOurNW1uPq0jlulMQa0xCJzY7kTlZf0AwTYZ05dlaCEAAAAASUVORK5CYII=) 10 round;
+        background-repeat: no-repeat;
+        position: absolute;
+      }
     </style>
-
+    <style>
+      cg-board square.last-move {
+        will-change: transform;
+        background-color: rgba(119, 0, 199, 0.41);
+      }
+    cg-board square.selected {
+        background-color: rgba(85, 20, 65, 0.5);
+    }
+    cg-board square.check {
+        background: rgba(255, 0, 0, 1) /* radial-gradient(ellipse at center, rgba(255, 0, 0, 1) 0%, rgba(231, 0, 0, 1) 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);*/
+    }
+    </style>
+    
     <script type="module">
-        function mostrarObjetoEnCuadro(objeto) {
-            var cuadro = document.getElementById('cuadro');
-            var lista = document.createElement('ul');
+      import { Chessground } from 'https://cdn.jsdelivr.net/npm/chessground@9.0.4/dist/chessground.js';
+      import Board from './lib/Board.js'
+      var showArrows = false;
+      var turnLetter = 'w';
+      const toDests = (chess) => {
+        const dests = {};
+        chess.SQUARES.forEach((s) => {
+          const ms = chess.moves({ square: s, verbose: true });
+          if (ms.length) dests[s] = ms.map((m) => m.to);
+        });
+        const color = chess.turn() === "w" ? "white" : "black";
 
-            for (var propiedad in objeto) {
-                if (objeto.hasOwnProperty(propiedad)) {
-                    var elementoLista = document.createElement('li');
-                    var texto = document.createTextNode(propiedad + ': ' + objeto[propiedad]);
-                    elementoLista.appendChild(texto);
-                    lista.appendChild(elementoLista);
-                }
-            }
-            cuadro.appendChild(lista);
-        }
+        return {
+          color, // who's turn is it
+          dests, // what to move
+          free: false
+        };
+      };
+      
 
-        import { Chessground } from 'https://cdn.jsdelivr.net/npm/chessground@9.0.4/dist/chessground.js';
-        import Board from './lib/Board.js';
+      // Función para mostrar el objeto en un cuadro de forma genérica
+  function mostrarObjetoEnCuadro(objeto) {
+    // Obtener el elemento cuadro por su ID
+    var cuadro = document.getElementById('cuadro');
+    console.log('mostrarObjetoEnCuadro')
+    // Crear un elemento de lista no ordenada (ul)
+    var lista = document.createElement('ul');
+
+    // Iterar sobre las propiedades del objeto
+    for (var propiedad in objeto) {
+      console.log(propiedad)
+      if (objeto.hasOwnProperty(propiedad)) {
+        // Crear un elemento de lista (li) para cada propiedad
+        var elementoLista = document.createElement('li');
+
+        // Crear un texto con el nombre de la propiedad y su valor
+        var texto = document.createTextNode(propiedad + ': ' + objeto[propiedad]);
+
+        // Agregar el texto al elemento de lista
+        elementoLista.appendChild(texto);
+
+        // Agregar el elemento de lista a la lista
+        lista.appendChild(elementoLista);
+      }
+    }
+
+    // Agregar la lista al cuadro
+    cuadro.appendChild(lista);
+  }
+      (function () {
+        window.loadBoard = loadBoard
         
-        var showArrows = false;
-        var turnLetter = 'w';
+        let board
+        let chessground
+        let chessgroundAux
+        let game
+        let turnColor
+        function setChessGround() {
+          chessground.set({
+              fen: chessgroundAux.getFen(),
+              orientation: 'white',
+              disableContextMenu: true,
+              turnColor: turnColor,
+              check: game.in_check(),
+              highlight: {
+                lastMove: true, // add last-move class to squares
+                check: true, // add check class to squares
+              },
+              animation: {
+                enabled: true,
+                duration: 1000,
+              },
+              movable: {
+                free: false
+              }
+            })
+        }
+        async function loadBoard () {
+          const port = await getPort()
+          if (!port) {
+            throw new Error('Ningún puerto disponible.')
+          }
+          await port.open({ baudRate: 9600 })
 
-        (function () {
-            window.loadBoard = loadBoard;
-            let board, chessground, chessgroundAux, game, turnColor;
-
-            function setChessGround() {
-                game.load(chessgroundAux.getFen());
-                chessground.set({
-                    fen: chessgroundAux.getFen(),
-                    orientation: 'white',
-                    disableContextMenu: true,
-                    turnColor: game.turn() === 'w' ? 'white' : 'black',
-                    check: game.in_check(),
-                    highlight: {
-                        lastMove: true,
-                        check: true
-                    },
-                    animation: {
-                        enabled: true,
-                        duration: 1000
-                    },
-                    movable: {
-                        free: false
-                    }
-                });
+          board = new Board(port)
+          const { serialNr, version, position } = await board.reset()
+          document.getElementById('serialnr').innerHTML = serialNr
+          document.getElementById('version').innerHTML = version
+          game = new Chess()
+          
+          chessgroundAux = Chessground(document.getElementById('chessgroundAux'), {
+            fen: '8/8/8/8/8/8/8/8/8',
+            orientation: 'white',
+            disableContextMenu: true,
+            trustAllEvents: true,
+            movable: {
+              free: false
             }
+          });
+          
+          chessgroundAux.setPieces(position)
+          var blancasRadio = document.getElementById("blancasRadio");
+          turnLetter = blancasRadio.checked ? 'w' : 'b';
+          var FEN = chessgroundAux.getFen() +  " " + turnLetter + " - - 0 1";
 
-            async function loadBoard() {
-                const port = await getPort();
-                if (!port) throw new Error('Ningún puerto disponible.');
-                await port.open({ baudRate: 9600 });
 
-                board = new Board(port);
-                const { serialNr, version, position } = await board.reset();
-                document.getElementById('serialnr').innerHTML = serialNr;
-                document.getElementById('version').innerHTML = version;
-                game = new Chess();
+          game.load(FEN)
+          console.log('Color: ' + game.turn())
+          
+          console.log('FEN: ' + game.fen())
+          console.log('INCHECK ' + game.in_check());
+          document.getElementById('fen').innerHTML = FEN
+          mostrarObjetoEnCuadro(position)
+          document.getElementById('info').innerHTML = JSON.stringify(Array.from(position), null, 2)
+          console.log(position)
+          
+          var from = ""
+          var to = ""
+          var from2 = ""
+          var to2 = ""
+          turnColor = game.turn() === "w" ? "white" : "black";
+          document.getElementById('turno').innerHTML = turnColor
+          console.log(position.ascii)
+          chessground = Chessground(document.getElementById('chessground'), {
+            fen: FEN,
+            orientation: 'white',
+            disableContextMenu: true,
+            turnColor: turnColor,
+            check: game.in_check(),
+            highlight: {
+              lastMove: true, // add last-move class to squares
+              check: true, // add check class to squares
+            },
+            animation: {
+              enabled: true,
+              duration: 1000,
+            },
+            movable: {
+              free: false
+            }
+          })
+          const reader = board.getReader()
+          while (true) {
+            const { value } = await reader.read()
+            chessgroundAux.setPieces(value)
+            // game.load(chessgroundAux.getFen())
+//             turnColor = game.turn() === "w" ? "white" : "black";
 
-                chessgroundAux = Chessground(document.getElementById('chessgroundAux'), {
-                    fen: '8/8/8/8/8/8/8/8/8',
-                    orientation: 'white',
-                    disableContextMenu: true,
-                    trustAllEvents: true,
-                    movable: { free: false }
-                });
-                chessgroundAux.setPieces(position);
+   //          console.log('Color: ' + turnColor)
+      //       console.log('FEN: ' + game.fen())
+            
+            //document.getElementById('turno').innerHTML = turnColor
 
-                mostrarObjetoEnCuadro(position);
-                var FEN = chessgroundAux.getFen() + " " + turnLetter + " - - 0 1";
-
-                game.load(FEN);
-                document.getElementById('fen').innerHTML = FEN;
-                document.getElementById('info').innerHTML = JSON.stringify(Array.from(position), null, 2);
-
-                // setTimeout(function () {
-                    chessground = Chessground(document.getElementById('chessground'), {
-                        fen: FEN,
-                        orientation: 'white',
-                        disableContextMenu: true,
-                        turnColor: game.turn() === 'w' ? 'white' : 'black',
-                        check: game.in_check(),
-                        highlight: {
-                            lastMove: true,
-                            check: true
-                        },
-                        animation: {
-                            enabled: true,
-                            duration: 500
-                        },
-                        movable: { free: false }
-                    });
-                // }, 1000);
-
-                const reader = board.getReader();
-                var from = "", to = "", role = "";
-                while (true) {
-                    const { value } = await reader.read();
-                    chessgroundAux.setPieces(value);
-
-                    if (from.length <= 0 && to.length <= 0) {
-                        from = Array.from(value)[0][0];
-                        role = Array.from(value)[0][1];
-                        document.getElementById('desde').innerHTML = from;
-                        // setTimeout(() => {
-                            if (to == '') {
-                                // from = '';
-                                setChessGround();
-                            }
-                        // }, 1000);
-                    } else {
-                      // window.alert('TO')
-                        to = Array.from(value)[0][0];
-                        role = Array.from(value)[0][1];
-                        document.getElementById('hasta').innerHTML = to;
-
-                        if (role) {
-                            document.getElementById('hasta').innerHTML += " " + role.role + " " + role.color;
-                            document.getElementById('turno').innerHTML = role.color === 'white' ? 'black' : 'white';
-                            turnColor = role.color === "black" ? "white" : "black";
-                            turnLetter = turnColor === "black" ? "b" : "w";
-                            FEN = chessground.getFen() + " " + turnLetter + " - - 0 1";
-                            document.getElementById('fen').innerHTML = FEN;
-                        } else from = '';
-
-                        if (from && to) {
-                            chessground.move(from, to);
-                            FEN = chessground.getFen() + " " + turnLetter + " - - 0 1";
-                            game.load(FEN);
-                            document.getElementById('fen').innerHTML = FEN;
-                            document.getElementById('info').innerHTML = JSON.stringify(Array.from(value), null, 2);
-
-                            if (chessgroundAux.getFen() != chessground.getFen()) 
-                              setChessGround();
-                            from = to = '';
-                        }
-                        from = '';
-                    }
+            var role = "";
+            if (from.length <= 0)
+            {
+              from = Array.from(value)[0][0]
+              role = Array.from(value)[0][1];
+              console.log('FROM ' + from)
+              if (role)
+              {
+                console.log('ROLE FROM' + JSON.stringify(role.role))
+              }
+              
+              document.getElementById('desde').innerHTML = from;
+              setTimeout(() => {
+                if (to == '')
+                {
+                  from = ''
+                  setChessGround();
                 }
+              }, "1000");
             }
-
-            async function getPort() {
-                const ports = await navigator.serial.getPorts();
-                for (const port of ports) {
-                    for (const filter of Board.FILTERS) {
-                        if (port.productId === filter.productId && port.vendorId === filter.vendorId) return port;
-                    }
-                }
-                return await navigator.serial.requestPort({ filters: [] });
+            else
+            {
+              to = Array.from(value)[0][0]
+              role = Array.from(value)[0][1];
+              console.log('TO ' + to)
+              document.getElementById('hasta').innerHTML = to;
+              if (role)
+              {
+                console.log('ROLE TO' + JSON.stringify(role.role))
+                document.getElementById('hasta').innerHTML += " " + role.role + " " + role.color;
+                // window.alert('Coronación');
+                // chessground.setPieces(value);
+              }
+              else
+                from = ''
             }
+            // document.getElementById('info').innerHTML = from + to
+            // document.getElementById('info').innerHTML = JSON.stringify(Array.from(value), null, 2)
+            // document.getElementById('fen').innerHTML = game.fen()
+            
 
-            window.loadBoard = loadBoard;
-        })();
+            if (from != null && to != null && from.length > 0 && to.length > 0)
+            {
+              turnColor = role.color === "black" ? "white" : "black";
+              turnLetter = role.color === "black" ? "b" : "w";
+              
+              FEN = chessground.getFen() +  " " + turnLetter + " - - 0 1";
+              game.load(FEN)
+              console.log('FEN: ' + game.fen())
+
+              // Verificar si el movimiento 'e2e4' es legal
+              var movimientoLegal = game.move({ from: from, to: to });
+              chessground.move(from, to);
+
+              // Imprimir el resultado en la consola
+              if (movimientoLegal !== null) {
+                console.log('El movimiento es legal.');
+                document.getElementById('juego').innerHTML = from + to + " Movimiento legal";
+              } else {
+                console.log('El movimiento no es legal.');
+                document.getElementById('juego').innerHTML = from + to + " Movimiento ilegal";
+              }
+
+              document.getElementById('turno').innerHTML = turnColor
+              document.getElementById('info').innerHTML = JSON.stringify(Array.from(value), null, 2)
+              console.log('Color: ' + game.turn())
+              
+              console.log('INCHECK ' + game.in_check());
+
+              if (chessgroundAux.getFen() != chessground.getFen())
+              {
+                setChessGround();
+              }
+              
+              from = '';
+              to = '';
+            }
+          }
+        }
+        
+        async function getPort () {
+          const ports = await navigator.serial.getPorts()
+          for (const port of ports) {
+            for (const filter of Board.FILTERS) {
+              if (port.productId === filter.productId && port.vendorId === filter.vendorId) {
+                return port
+              }
+            }
+          }
+
+          // do not use `Board.FILTERS` as of now since we do not
+          //   know all valid identifiers, also when using a VM etc.
+          const filters = []
+          return await navigator.serial.requestPort({
+            filters: filters
+          })
+        }
+      })()
     </script>
-</head>
-<body onload="loadBoard()">
-    <div class="left-section">
-        <div id="chessground" style="width: 600px; height: 600px;"></div>
+  </head>
+  <body onload="">
+    <div class="app">
+      <div class="header">
+        <div class="title-block">
+          <h1>Mainchess DGT via WebUSB</h1>
+          <p>Visualización del tablero DGT con la funcionalidad estable de la versión 2.</p>
+        </div>
+        <button class="primary-btn" onclick="loadBoard()">Cargar posición del tablero DGT</button>
+      </div>
+
+      <div class="layout">
+        <div class="card">
+          <h2>Tablero en vivo</h2>
+          <div class="board-shell">
+            <div id="chessground"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Estado y detalles</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>Puerto serie Nr</strong>
+              <span id="serialnr">n/a</span>
+            </div>
+            <div class="info-item">
+              <strong>Versión</strong>
+              <span id="version">n/a</span>
+            </div>
+            <div class="info-item">
+              <strong>Turno</strong>
+              <span id="turno" class="pill"></span>
+            </div>
+            <div class="info-item">
+              <strong>Movimiento</strong>
+              <span id="juego"></span>
+            </div>
+            <div class="info-item">
+              <strong>FEN</strong>
+              <span id="fen"></span>
+            </div>
+            <div class="info-item">
+              <strong>Desde / Hasta</strong>
+              <div class="status-line">
+                <span class="pill" id="desde"></span>
+                <span class="pill" id="hasta"></span>
+              </div>
+            </div>
+            <div class="info-item" style="grid-column: span 2;">
+              <strong>INFO DRIVER</strong>
+              <span id="info"></span>
+            </div>
+          </div>
+          <div id="cuadro"></div>
+        </div>
+      </div>
+
+      <div id="chessgroundAux"></div>
     </div>
-    <div class="right-section">
-        <button onclick="loadBoard()">Cargar posición del tablero DGT</button>
-        <p><strong>Puerto serie Nr:</strong> <span id="serialnr">n/a</span> | <strong>Versión:</strong> <span id="version">n/a</span></p>
-        <p><strong>Turno:</strong> <span id="turno"></span> | <strong>Movimiento:</strong> <span id="juego"></span></p>
-        <p><strong>FEN:</strong> <span id="fen"></span></p>
-        <p><strong>DESDE:</strong> <span id="desde"></span> | <strong>HASTA:</strong><span id="hasta"></span></p>
-        <p><strong>INFO DRIVER:</strong> <span id="info"></span></p>
-        <div id="cuadro"></div>
-    </div>
-    <div id="chessgroundAux" style="width: 600px; display: none; height: 600px;"></div>
-</body>
+    
+<!-- Botón para abrir la ventana modal -->
+<!--<button onclick="abrirModal()">Iniciar Juego</button>-->
+<!-- Ventana modal -->
+<div id="myModal">
+  <div id="myModal-content">
+    <div id="modal-title">Selecciona el color para empezar</div>
+    <form id="inicioJuegoForm">
+      <label>
+        <input type="radio" name="color" id="blancasRadio"> Blancas
+      </label>
+      <label>
+        <input type="radio" name="color" id="negrasRadio"> Negras
+      </label>
+      <button type="button" onclick="verificarInicioJuego()">Confirmar</button>
+    </form>
+  </div>
+</div>
+
+<script >
+  // Función para abrir la ventana modal
+  function abrirModal() {
+    var modal = document.getElementById("myModal");
+    modal.style.display = "block";
+  }
+
+  // Función para verificar quién empieza jugando
+  function verificarInicioJuego() {
+    
+    var blancasRadio = document.getElementById("blancasRadio");
+    var negrasRadio = document.getElementById("negrasRadio");
+    
+    if (blancasRadio.checked || negrasRadio.checked) {
+      var modal = document.getElementById("myModal");
+      modal.style.display = "none";
+
+      if (blancasRadio.checked) {
+        // alert("¡Comienzan las blancas!");
+        turnLetter  = 'w';
+        loadBoard();
+      } else {
+        // alert("¡Comienzan las negras!");
+        turnLetter = 'b';
+        loadBoard();
+      }
+    } else {
+      alert("Por favor, elija un color para comenzar.");
+    }
+  }
+</script>
+
+   
+  </body>
 </html>
