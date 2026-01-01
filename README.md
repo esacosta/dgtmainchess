@@ -11,11 +11,12 @@ Proyecto estatico para visualizar y seguir un tablero DGT conectandolo al navega
 1) Arranca un servidor estatico en la raiz del repo, por ejemplo: `python -m http.server 8000`.
 2) Abre `http://localhost:8000/` y elige la variante que quieras probar (`/index.html`, `/v2/` o `/v3/`).
 3) Conecta el tablero y pulsa el boton "Cargar posicion del tablero DGT" para conceder permisos y sincronizar.
+4) En la variante `/v3`, usa los selectores superiores para alternar entre modo claro/oscuro, elegir el diseño de tablero y cambiar la paleta de piezas sin necesidad de recargar la pagina.
 
 ## Estructura rapida
 - `index.html`: demo basica; lee la posicion inicial, resalta ultimos movimientos y muestra el FEN.
 - `v2/`: interfaz con validacion de jugadas usando chess.js y seleccion de color inicial.
-- `v3/`: version apaisada con tablero principal, tablero auxiliar oculto y sincronizacion de turnos.
+- `v3/`: version apaisada con tablero principal, tablero auxiliar oculto y sincronizacion de turnos. Incluye selector de tema claro/oscuro, estilos de tablero (madera, pizarra, esmeralda) y tres gamas de piezas (clasicas, neón, esmeralda).
 - `lib/Board.js`: envoltorio sobre Web Serial para hablar con el tablero DGT (reset, numero de serie, version, posicion, lector continuo).
 - `lib/Command.js`: constantes y decodificacion del protocolo DGT, incluyendo piezas y mapeo de casillas.
 - `plugins/chessground/`: assets locales de Chessground (CSS y JS minificado) para poder usarlo sin conexion CDN en la version basica.
