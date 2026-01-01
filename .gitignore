@@ -1,0 +1,26 @@
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Dependencias
+node_modules/
+
+# Builds temporales
+.dist/
+dist/
+out/
+build/
+.cache/
+coverage/
+
+# Configuracion local
+.env
+.env.*
+.vscode/
+.idea/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
