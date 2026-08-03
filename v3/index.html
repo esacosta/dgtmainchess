@@ -8,6 +8,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.0.4/assets/chessground.base.css">
     <link rel="stylesheet" href="plugins/chessground/colors.css">
     <link rel="stylesheet" href="plugins/chessground/pieces.css">
+    <script>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('dgt-theme') || 'dark';
+      } catch (error) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
     <style>
       :root {
@@ -17,8 +24,25 @@
         --accent: #4da3ff;
         --text: #e8eefc;
         --muted: #9db0d6;
-        --board-max-size: 640px;
-        --vertical-safe-space: 260px;
+        --panel-soft: rgba(17, 24, 43, 0.9);
+        --panel-card: rgba(17, 24, 43, 0.85);
+        --surface: #0f192c;
+        --board-shell: #0c1426;
+        --board-max-size: 700px;
+        --vertical-safe-space: 145px;
+      }
+
+      :root[data-theme="light"] {
+        --bg: #edf3fb;
+        --panel: #ffffff;
+        --border: #cbd8ea;
+        --accent: #2563eb;
+        --text: #172033;
+        --muted: #526581;
+        --panel-soft: rgba(255, 255, 255, 0.94);
+        --panel-card: rgba(255, 255, 255, 0.9);
+        --surface: #f5f8fc;
+        --board-shell: #e5edf7;
       }
 
       * {
@@ -38,47 +62,64 @@
       }
 
       .app {
-        max-width: 1280px;
+        max-width: 1320px;
         margin: 0 auto;
-        padding: 32px 24px 48px;
+        padding: 12px 20px 28px;
       }
 
       .header {
-        background: rgba(17, 24, 43, 0.9);
+        background: var(--panel-soft);
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 20px 24px;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        border-radius: 12px;
+        padding: 9px 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(8px);
-        margin-bottom: 24px;
+        margin-bottom: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 16px;
+        gap: 12px;
+        min-height: 56px;
+      }
+
+      .title-block {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex: 0 0 auto;
       }
 
       .title-block h1 {
         margin: 0;
-        font-size: 24px;
+        font-size: 18px;
+        line-height: 1;
         letter-spacing: 0.2px;
+        white-space: nowrap;
       }
 
-      .title-block p {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 14px;
+      .brand-badge {
+        border: 1px solid rgba(77, 163, 255, 0.35);
+        border-radius: 999px;
+        background: rgba(77, 163, 255, 0.12);
+        color: var(--accent);
+        padding: 4px 7px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        line-height: 1;
       }
 
       .primary-btn {
         background: linear-gradient(135deg, #4da3ff, #6b7bff);
         color: white;
-        padding: 12px 18px;
+        min-height: 36px;
+        padding: 8px 13px;
         border: none;
-        border-radius: 10px;
+        border-radius: 9px;
         font-weight: 600;
         letter-spacing: 0.2px;
         cursor: pointer;
-        box-shadow: 0 8px 20px rgba(77, 163, 255, 0.35);
+        box-shadow: 0 5px 14px rgba(77, 163, 255, 0.28);
         transition: transform 0.15s ease, box-shadow 0.15s ease;
       }
 
@@ -87,32 +128,71 @@
         box-shadow: 0 12px 26px rgba(77, 163, 255, 0.4);
       }
 
+      .header-actions,
+      .appearance-controls {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .appearance-control {
+        display: block;
+        font-size: 0;
+      }
+
+      .appearance-control select,
+      .theme-btn {
+        min-height: 34px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--surface);
+        color: var(--text);
+        padding: 6px 9px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .theme-btn {
+        min-width: 74px;
+        font-weight: 650;
+      }
+
+      .appearance-control select:focus-visible,
+      .theme-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
       .layout {
         display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 20px;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 14px;
       }
 
       .card {
-        background: rgba(17, 24, 43, 0.85);
+        background: var(--panel-card);
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
+        border-radius: 13px;
+        padding: 12px;
         box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
       }
 
       .card h2 {
-        margin: 0 0 12px;
-        font-size: 16px;
+        margin: 0 0 8px;
+        font-size: 14px;
         letter-spacing: 0.2px;
         color: var(--muted);
       }
 
       .board-shell {
-        background: #0c1426;
-        border-radius: 12px;
+        background: var(--board-shell);
+        border-radius: 10px;
         border: 1px solid var(--border);
-        padding: 12px;
+        padding: 8px;
       }
 
       #chessground {
@@ -137,7 +217,7 @@
       }
 
       .info-item {
-        background: #0f192c;
+        background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 12px 14px;
@@ -158,7 +238,7 @@
       #cuadro {
         margin-top: 14px;
         padding: 12px 14px;
-        background: #0f192c;
+        background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 12px;
         max-height: 180px;
@@ -203,7 +283,7 @@
       
       /* Contenido de la ventana modal */
       #myModal-content {
-        background-color: #0f192c;
+        background-color: var(--surface);
         margin: 12% auto;
         padding: 24px;
         border: 1px solid var(--border);
@@ -233,6 +313,36 @@
 
       #inicioJuegoForm button {
         margin-top: 6px;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .header {
+          flex-wrap: wrap;
+        }
+      }
+
+      @media (max-width: 680px) {
+        :root {
+          --vertical-safe-space: 190px;
+        }
+
+        .app {
+          padding: 8px 10px 20px;
+        }
+
+        .header {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .header-actions,
+        .appearance-controls {
+          justify-content: flex-start;
+        }
       }
 
       .cg-wrap:before {
@@ -519,10 +629,33 @@
     <div class="app">
       <div class="header">
         <div class="title-block">
-          <h1>Mainchess DGT via WebUSB</h1>
-          <p>Visualización del tablero DGT sin necesidad de software de DGT, a través de WebUSB (por esacosta).</p>
+          <h1>Mainchess DGT</h1>
+          <span class="brand-badge">WEBUSB</span>
         </div>
-        <button class="primary-btn" onclick="loadBoard()">Cargar posición del tablero DGT</button>
+        <div class="header-actions">
+          <div class="appearance-controls" aria-label="Personalizar apariencia">
+            <label class="appearance-control">
+              Tablero
+              <select id="boardTheme" aria-label="Tema del tablero">
+                <option value="maple">Madera original</option>
+                <option value="classic">Arce clásico</option>
+                <option value="blue">Azul</option>
+                <option value="green">Verde</option>
+                <option value="graphite">Grafito</option>
+              </select>
+            </label>
+            <label class="appearance-control">
+              Piezas
+              <select id="pieceTheme" aria-label="Juego de piezas">
+                <option value="carved">Talladas</option>
+                <option value="unicode">Cl&aacute;sicas</option>
+                <option value="contrast">Alto contraste</option>
+              </select>
+            </label>
+            <button id="themeToggle" class="theme-btn" type="button" aria-label="Cambiar tema de interfaz" aria-pressed="false">Claro</button>
+          </div>
+          <button class="primary-btn" onclick="loadBoard()">Conectar DGT</button>
+        </div>
       </div>
 
       <div class="layout">
@@ -594,6 +727,51 @@
 </div>
 
 <script >
+  (function setupAppearance() {
+    const root = document.documentElement;
+    const boardTheme = document.getElementById('boardTheme');
+    const pieceTheme = document.getElementById('pieceTheme');
+    const themeToggle = document.getElementById('themeToggle');
+
+    function readPreference(key, fallback) {
+      try { return localStorage.getItem(key) || fallback; } catch (error) { return fallback; }
+    }
+
+    function savePreference(key, value) {
+      try { localStorage.setItem(key, value); } catch (error) { /* Storage can be disabled. */ }
+    }
+
+    function updateThemeButton() {
+      const isLight = root.dataset.theme === 'light';
+      themeToggle.textContent = isLight ? 'Oscuro' : 'Claro';
+      themeToggle.setAttribute('aria-pressed', String(isLight));
+    }
+
+    const savedBoard = readPreference('dgt-board', 'maple');
+    const savedPieces = readPreference('dgt-pieces', 'carved');
+    document.body.dataset.board = savedBoard;
+    document.body.dataset.pieces = savedPieces;
+    boardTheme.value = savedBoard;
+    pieceTheme.value = savedPieces;
+    updateThemeButton();
+
+    themeToggle.addEventListener('click', function () {
+      root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+      savePreference('dgt-theme', root.dataset.theme);
+      updateThemeButton();
+    });
+
+    boardTheme.addEventListener('change', function () {
+      document.body.dataset.board = boardTheme.value;
+      savePreference('dgt-board', boardTheme.value);
+    });
+
+    pieceTheme.addEventListener('change', function () {
+      document.body.dataset.pieces = pieceTheme.value;
+      savePreference('dgt-pieces', pieceTheme.value);
+    });
+  })();
+
   // Función para abrir la ventana modal
   function abrirModal() {
     var modal = document.getElementById("myModal");

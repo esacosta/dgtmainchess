@@ -1,6 +1,48 @@
 /** Colored board squares as an embedded SVG */
+.cg-wrap {
+  --board-light: #f0d9b5;
+  --board-dark: #b58863;
+}
+
 cg-board {
-  background-image: url('https://play.mainchess.com/static/img/maple.d620f00.png');
+  background-color: var(--board-light);
+  background-image: conic-gradient(
+    var(--board-dark) 25%,
+    var(--board-light) 0 50%,
+    var(--board-dark) 0 75%,
+    var(--board-light) 0
+  );
+  background-size: 25% 25%;
+}
+
+/* Original wooden board, with the local checkerboard underneath as fallback. */
+body[data-board="maple"] cg-board {
+  background-image:
+    url("maple.d620f00.png"),
+    conic-gradient(
+      var(--board-dark) 25%,
+      var(--board-light) 0 50%,
+      var(--board-dark) 0 75%,
+      var(--board-light) 0
+    );
+  background-position: center, 0 0;
+  background-repeat: no-repeat, repeat;
+  background-size: cover, 25% 25%;
+}
+
+body[data-board="blue"] .cg-wrap {
+  --board-light: #d7e3f4;
+  --board-dark: #6b88ad;
+}
+
+body[data-board="green"] .cg-wrap {
+  --board-light: #e8edcf;
+  --board-dark: #78945c;
+}
+
+body[data-board="graphite"] .cg-wrap {
+  --board-light: #c9cdd2;
+  --board-dark: #5d646d;
 }
 
 /** Interactive board square colors */
@@ -37,29 +79,29 @@ cg-board square.current-premove {
 
 /** Alternating colors in rank/file labels */
 .cg-wrap.orientation-white coords.ranks coord:nth-child(2n) {
-  color: #b58863;
+  color: var(--board-dark);
 }
 .cg-wrap.orientation-white coords.ranks coord:nth-child(2n + 1) {
-  color: #f0d9b5;
+  color: var(--board-light);
 }
 .cg-wrap.orientation-white coords.files coord:nth-child(2n) {
-  color: #b58863;
+  color: var(--board-dark);
 }
 .cg-wrap.orientation-white coords.files coord:nth-child(2n + 1) {
-  color: #f0d9b5;
+  color: var(--board-light);
 }
 
 .cg-wrap.orientation-black coords.ranks coord:nth-child(2n) {
-  color: #f0d9b5;
+  color: var(--board-light);
 }
 .cg-wrap.orientation-black coords.ranks coord:nth-child(2n + 1) {
-  color: #b58863;
+  color: var(--board-dark);
 }
 .cg-wrap.orientation-black coords.files coord:nth-child(2n) {
-  color: #f0d9b5;
+  color: var(--board-light);
 }
 .cg-wrap.orientation-black coords.files coord:nth-child(2n + 1) {
-  color: #b58863;
+  color: var(--board-dark);
 }
 
 

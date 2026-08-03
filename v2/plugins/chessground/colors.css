@@ -1,6 +1,17 @@
 /** Colored board squares as an embedded SVG */
 cg-board {
-  background-image: url('https://play.mainchess.com/static/img/maple.d620f00.png');
+  background-color: #f0d9b5;
+  background-image:
+    url("maple.d620f00.png"),
+    conic-gradient(
+      #b58863 25%,
+      #f0d9b5 0 50%,
+      #b58863 0 75%,
+      #f0d9b5 0
+    );
+  background-position: center, 0 0;
+  background-repeat: no-repeat, repeat;
+  background-size: cover, 25% 25%;
 }
 
 /** Interactive board square colors */
